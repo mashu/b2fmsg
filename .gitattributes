@@ -1,0 +1,8 @@
+# Exact-byte fixtures: never rewrite line endings on Windows checkouts.
+tests/data/*.txt text eol=lf
+tests/data/*.lzh binary
+
+*.rs text eol=lf
+*.toml text eol=lf
+*.yml text eol=lf
+*.md text eol=lf

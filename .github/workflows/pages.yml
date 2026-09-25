@@ -1,0 +1,52 @@
+name: Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+      - uses: taiki-e/install-action@wasm-pack
+      - name: Build wasm
+        run: wasm-pack build --target web --out-dir web/pkg --no-default-features --release
+      - name: Cache-bust static assets
+        run: |
+          HASH=$(git rev-parse --short HEAD)
+          sed -i "s|b2fmsg_bg.wasm|b2fmsg_bg.wasm?v=${HASH}|g" web/pkg/b2fmsg.js
+          sed -i "s|style.css?v=[^\"]*|style.css?v=${HASH}|g" web/index.html
+          sed -i "s|app.js?v=[^\"]*|app.js?v=${HASH}|g" web/index.html
+          sed -i "s|b2fmsg.js?v=[^\"]*|b2fmsg.js?v=${HASH}|g" web/app.js
+          echo "cache bust=${HASH}"
+      - name: Setup Pages
+        uses: actions/configure-pages@v6
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

@@ -1,0 +1,47 @@
+[package]
+name = "b2fmsg"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+description = "Winlink-compatible radio email client (B2F) for the CMS over telnet or RMS gateways through Direwolf"
+license = "MIT"
+repository = "https://github.com/mashu/b2fmsg"
+readme = "README.md"
+keywords = ["winlink", "b2f", "ham-radio", "direwolf", "agw"]
+categories = ["command-line-utilities", "network-programming", "email"]
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "b2fmsg"
+path = "src/bin/b2fmsg.rs"
+required-features = ["cli"]
+
+[[bin]]
+name = "b2fmsg-bridge"
+path = "src/bin/b2fmsg-bridge.rs"
+required-features = ["bridge"]
+
+[features]
+default = ["cli", "bridge"]
+cli = []
+bridge = ["dep:tokio", "dep:tokio-tungstenite", "dep:futures-util"]
+
+[dependencies]
+tokio = { version = "1", features = ["rt-multi-thread", "net", "io-util", "macros", "sync", "time"], optional = true }
+tokio-tungstenite = { version = "0.30", optional = true }
+futures-util = { version = "0.3", optional = true }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = "0.2"
+serde = { version = "1", features = ["derive"] }
+serde-wasm-bindgen = "0.6"
+js-sys = "0.3"
+
+[profile.release]
+strip = true
+lto = true
+
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = false

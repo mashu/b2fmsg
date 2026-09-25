@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>b2fmsg — radio email</title>
+  <meta name="description" content="Winlink-compatible radio email in the browser: the CMS over the internet, or an RMS gateway through Direwolf.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=1">
+</head>
+<body>
+  <div class="atmosphere" aria-hidden="true"></div>
+
+  <main>
+    <header class="hero">
+      <p class="eyebrow">Amateur radio email</p>
+      <h1>b2fmsg</h1>
+      <p class="lede">Send and receive Winlink mail from your browser, through the CMS over the internet or an RMS gateway on the air via Direwolf.</p>
+      <div id="status" class="status" data-state="idle">loading</div>
+    </header>
+
+    <ol class="rail" id="rail" aria-label="Exchange progress">
+      <li data-step="link">Link</li>
+      <li data-step="login">Login</li>
+      <li data-step="handshake">Handshake</li>
+      <li data-step="transfer">Transfer</li>
+      <li data-step="done">Done</li>
+    </ol>
+
+    <form id="connect" class="deck" autocomplete="on">
+      <div class="field">
+        <label for="call">Callsign</label>
+        <input id="call" name="call" required placeholder="SA0KAM" autocomplete="username" spellcheck="false">
+      </div>
+      <div class="field">
+        <label for="password">Winlink password <span class="soft">(never leaves this page)</span></label>
+        <input id="password" name="password" type="password" autocomplete="current-password">
+      </div>
+      <div class="field">
+        <label for="mode">Link</label>
+        <select id="mode" name="mode">
+          <option value="cms">Winlink CMS · internet</option>
+          <option value="agw">RMS gateway · Direwolf</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="locator">Locator <span class="soft">(optional)</span></label>
+        <input id="locator" name="locator" placeholder="JO89" spellcheck="false">
+      </div>
+      <div class="field agw-only hidden">
+        <label for="gateway">Gateway callsign</label>
+        <input id="gateway" name="gateway" placeholder="SK0XYZ-10" spellcheck="false">
+      </div>
+      <div class="field agw-only hidden">
+        <label for="via">Via <span class="soft">(digipeaters, optional)</span></label>
+        <input id="via" name="via" placeholder="SK0DIG" spellcheck="false">
+      </div>
+      <div class="field span">
+        <label for="bridge">Bridge</label>
+        <input id="bridge" name="bridge" value="ws://127.0.0.1:8765" spellcheck="false">
+      </div>
+      <div class="actions span">
+        <button type="submit" id="connect-btn" disabled>Loading…</button>
+        <button type="button" id="abort-btn" class="ghost" disabled>Stop</button>
+      </div>
+    </form>
+
+    <section class="mailbox" aria-label="Mailbox">
+      <div class="mailbox-bar">
+        <div class="tabs" role="tablist">
+          <button type="button" role="tab" class="tab" data-folder="inbox" aria-selected="true">Inbox <span class="count"></span></button>
+          <button type="button" role="tab" class="tab" data-folder="outbox" aria-selected="false">Outbox <span class="count"></span></button>
+          <button type="button" role="tab" class="tab" data-folder="sent" aria-selected="false">Sent <span class="count"></span></button>
+        </div>
+        <button type="button" id="write-btn" class="write">Write message</button>
+      </div>
+      <ul id="list" class="list"></ul>
+      <article id="reader" class="reader" hidden></article>
+    </section>
+
+    <form id="compose" class="composer" hidden>
+      <div class="field span">
+        <label for="to">To</label>
+        <input id="to" name="to" required placeholder="SO5KM, friend@example.com" spellcheck="false">
+      </div>
+      <div class="field span">
+        <label for="cc">Cc <span class="soft">(optional)</span></label>
+        <input id="cc" name="cc" spellcheck="false">
+      </div>
+      <div class="field span">
+        <label for="subject">Subject</label>
+        <input id="subject" name="subject" required maxlength="100">
+      </div>
+      <div class="field span">
+        <label for="body">Message</label>
+        <textarea id="body" name="body" rows="8"></textarea>
+      </div>
+      <div class="field span">
+        <label for="files">Attachments <span class="soft">(keep them small on radio)</span></label>
+        <input id="files" name="files" type="file" multiple>
+      </div>
+      <div class="actions span">
+        <button type="submit">Put in outbox</button>
+        <button type="button" id="discard-btn" class="ghost">Discard</button>
+      </div>
+    </form>
+
+    <section class="terminal" aria-label="Session transcript">
+      <div class="terminal-bar">
+        <span>Session</span>
+        <span id="hint" class="hint"></span>
+      </div>
+      <div id="log" class="log" aria-live="polite"></div>
+    </section>
+
+    <section class="downloads" id="downloads">
+      <h2>Desktop programs</h2>
+      <p class="dl-lede">Browsers cannot open the TCP connections Winlink uses, so this page talks to a small bridge on your computer at <code>ws://127.0.0.1:8765</code>. The command-line client works on its own.</p>
+      <a id="dl-bridge" class="dl-primary" href="https://github.com/mashu/b2fmsg/releases/latest">Download bridge</a>
+      <div class="dl-meta">
+        <span id="dl-detect">Detecting your system</span>
+        <a id="dl-all" href="https://github.com/mashu/b2fmsg/releases/latest">All platforms</a>
+        <a id="dl-cli" href="https://github.com/mashu/b2fmsg/releases/latest">Command-line client</a>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="app.js?v=1"></script>
+</body>
+</html>
